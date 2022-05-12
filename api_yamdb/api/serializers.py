@@ -1,7 +1,12 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
+
+from django.contrib.auth import get_user_model
+
 from reviews.models import Review, Comment
+
+User = get_user_model()
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -44,3 +49,9 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = '__all__'
+
+
+class UserSignupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email')
