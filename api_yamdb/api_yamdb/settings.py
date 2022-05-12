@@ -23,9 +23,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'reviews.apps.ReviewsConfig',
     'api.apps.ApiConfig',
 ]
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

@@ -4,9 +4,25 @@ from rest_framework.generics import get_object_or_404
 
 from django.contrib.auth import get_user_model
 
-from reviews.models import Review, Comment
+from reviews.models import Review, Comment, Titles, Generes, Categories
 
 User = get_user_model()
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Titles
+        fields = "__all__"
+
+class GenereSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Generes
+        fields = "__all__"
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Categories
+        fields = "__all__"
 
 
 class ReviewSerializer(serializers.ModelSerializer):
