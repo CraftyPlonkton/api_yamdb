@@ -2,26 +2,28 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, tokens
 
-from reviews.models import Review, Comment, Titles, Generes, Categories
+from reviews.models import Review, Comment, Title, Genre, Category
 
 User = get_user_model()
 
 
 class TitleSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Titles
+        model = Title
         fields = "__all__"
 
-class GenereSerializer(serializers.ModelSerializer):
+
+class GenreSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Generes
+        model = Genre
         fields = "__all__"
+
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Categories
+        model = Category
         fields = "__all__"
 
 
@@ -71,3 +73,15 @@ class UserSignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email')
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError('Username "me" not allowed')
+        return value
+
+    def create(self, validated_data):
+        confirmation_code = tokens.default_token_generator()
+        user = User.objects.create(
+            confirmation_code=confirmation_code, **validated_data
+        )
+        return user

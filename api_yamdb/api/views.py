@@ -4,12 +4,12 @@ from rest_framework.pagination import LimitOffsetPagination
 
 from django.shortcuts import get_object_or_404
 
-from reviews.models import Review, Titles, Generes, Categories
-from reviews.serializers import (
+from reviews.models import Review, Title, Genre, Category
+from api.serializers import (
     CommentSerializer,
     ReviewSerializer,
     TitleSerializer,
-    GenereSerializer,
+    GenreSerializer,
     CategorySerializer,
 )
 
@@ -43,29 +43,31 @@ class CommentViewSet(viewsets.ModelViewSet):
         
 # GETlist, POST, DELETE
 class CategoryViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
-                    mixins.DeleteModelMixin, viewsets.GenericViewSet):
-    queryset = Categories.objects.all()
+                      mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    filter_backends = (filters.SearchFilter)
+    filter_backends = (filters.SearchFilter,)
     permission_classes = [IsAdminUser]
     pagination_class = LimitOffsetPagination
     search_fields = ('name',)
+
 
 # GETlist, POST, DELETE
 class GenereViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
-                    mixins.DeleteModelMixin, viewsets.GenericViewSet):
-    queryset =Generes.objects.all()
-    serializer_class = GenereSerializer
-    filter_backends = (filters.SearchFilter)
+                    mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    filter_backends = (filters.SearchFilter,)
     permission_classes = [IsAdminUser]
     pagination_class = LimitOffsetPagination
     search_fields = ('name',)
 
+
 # GETlist, GET, POST, PATCH, DELETE
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset =Titles.objects.all()
+    queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    filter_backends = (filters.SearchFilter)
+    filter_backends = (filters.SearchFilter,)
     permission_classes = [IsAdminUser]
     pagination_class = LimitOffsetPagination
     search_fields = ('name',)
