@@ -6,7 +6,7 @@ User = get_user_model()
 
 class Review(models.Model):
     title = models.ForeignKey(
-        Title,
+        'Title',
         verbose_name='Произведения',
         on_delete=models.CASCADE,
         related_name='reviews'
@@ -62,7 +62,7 @@ class Comment(models.Model):
         ordering = ['pub_date']
 
         
-class Categories(models.Model):
+class Category(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(
         max_length=50, unique=True,
@@ -71,7 +71,8 @@ class Categories(models.Model):
     def __str__(self):
         return self.name
 
-class Genres(models.Model):
+
+class Genre(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(
         max_length=50, unique=True,
@@ -80,14 +81,15 @@ class Genres(models.Model):
     def __str__(self):
         return self.name
 
-class Titles(models.Model):
+
+class Title(models.Model):
     name = models.TextField()
     year = models.IntegerField()
     description = models.TextField()
     genre = models.ForeignKey(
-        Genres, on_delete=models.CASCADE, related_name='titles')
+        Genre, on_delete=models.CASCADE, related_name='titles')
     category = models.ForeignKey(
-        Categories, on_delete=models.CASCADE, related_name='titles')
+        Category, on_delete=models.CASCADE, related_name='titles')
 
     def __str__(self):
         return self.name
