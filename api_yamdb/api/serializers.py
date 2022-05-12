@@ -3,6 +3,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 
 from django.contrib.auth import get_user_model, tokens
+from django.core.mail import send_mail
 
 from reviews.models import Review, Comment, Title, Genre, Category
 
@@ -69,19 +70,26 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class UserSignupSerializer(serializers.ModelSerializer):
+class UserSignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email')
 
     def validate_username(self, value):
         if value == 'me':
-            raise serializers.ValidationError('Username "me" not allowed')
+            raise serializers.ValidationError(r'Username "me" not allowed')
         return value
 
     def create(self, validated_data):
-        confirmation_code = tokens.default_token_generator()
-        user = User.objects.create(
-            confirmation_code=confirmation_code, **validated_data
-        )
+        user = User.objects.get_or_create(**validated_data)[0]
+        if self.context['request'].user.is_anonymous:
+            confirmation_code = tokens.default_token_generator.make_token(user)
+            user.confirmation_code = confirmation_code
+            user.save()
+            send_mail(
+                'Subject',
+                f'Your confirmation code {confirmation_code}',
+                'from@example.com',
+                [user.email],
+            )
         return user

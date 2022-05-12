@@ -1,8 +1,10 @@
-from rest_framework import viewsets, filters, mixins
-from rest_framework.permissions import IsAdminUser
+from rest_framework import viewsets, filters, mixins, generics
+from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.pagination import LimitOffsetPagination
 
 from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model, tokens
+from django.core.mail import send_mail
 
 from reviews.models import Review, Title, Genre, Category
 from api.serializers import (
@@ -11,7 +13,10 @@ from api.serializers import (
     TitleSerializer,
     GenreSerializer,
     CategorySerializer,
+    UserSignUpSerializer
 )
+
+User = get_user_model()
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -71,3 +76,9 @@ class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser]
     pagination_class = LimitOffsetPagination
     search_fields = ('name',)
+
+
+class UserSignUpView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSignUpSerializer
+    permission_classes = (AllowAny,)
