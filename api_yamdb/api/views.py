@@ -5,8 +5,8 @@ from rest_framework.response import Response
 
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from django.utils.crypto import get_random_string
 from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
 
 from reviews.models import Review, Title, Genre, Category
 from .permissions import IsAdminOrOwner
@@ -88,18 +88,16 @@ class UserSignUpView(views.APIView):
 
     def post(self, request):
         serializer = UserSignUpSerializer(data=request.data)
-        if not serializer.is_valid(raise_exception=True):
-            '''return Response(
-                data=serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )'''
+        serializer.is_valid(raise_exception=True)
         confirmation_code = get_random_string(length=30)
+        serializer.save()
         serializer.save(confirmation_code=confirmation_code)
+        print(serializer.validated_data)
         send_mail(
             'Subject',
             f'Your confirmation code {confirmation_code}',
             'from@example.com',
-            [serializer.data['email']],
+            [serializer.validated_data['email']],
         )
         return Response(
             data=serializer.validated_data,
@@ -112,11 +110,7 @@ class TokenCreateView(views.APIView):
 
     def post(self, request):
         serializer = TokenCreateSerializer(data=request.data)
-        if not serializer.is_valid(raise_exception=True):
-            '''return Response(
-                data=serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )'''
+        serializer.is_valid(raise_exception=True)
         return Response(
             data={'access': str(serializer.validated_data)},
             status=status.HTTP_200_OK
