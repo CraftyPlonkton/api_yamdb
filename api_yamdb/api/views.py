@@ -1,17 +1,27 @@
-from rest_framework import viewsets, filters, mixins
-from rest_framework.permissions import IsAdminUser
+from rest_framework import viewsets, filters, mixins, views, status
+from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.response import Response
 
 from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
 
 from reviews.models import Review, Title, Genre, Category
-from api.serializers import (
+from .permissions import IsAdminOrOwner
+from .serializers import (
     CommentSerializer,
     ReviewSerializer,
     TitleSerializer,
     GenreSerializer,
     CategorySerializer,
+    UserSignUpSerializer,
+    TokenCreateSerializer,
+    UserSerializer
 )
+
+User = get_user_model()
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
@@ -71,3 +81,47 @@ class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser]
     pagination_class = LimitOffsetPagination
     search_fields = ('name',)
+
+
+class UserSignUpView(views.APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = UserSignUpSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        confirmation_code = get_random_string(length=30)
+        serializer.save()
+        serializer.save(confirmation_code=confirmation_code)
+        print(serializer.validated_data)
+        send_mail(
+            'Subject',
+            f'Your confirmation code {confirmation_code}',
+            'from@example.com',
+            [serializer.validated_data['email']],
+        )
+        return Response(
+            data=serializer.validated_data,
+            status=status.HTTP_200_OK
+        )
+
+
+class TokenCreateView(views.APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = TokenCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(
+            data={'access': str(serializer.validated_data)},
+            status=status.HTTP_200_OK
+        )
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    lookup_field = 'username'
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (IsAdminOrOwner,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ['username']
+

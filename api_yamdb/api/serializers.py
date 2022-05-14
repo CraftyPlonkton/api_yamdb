@@ -1,8 +1,11 @@
+from django.utils.crypto import get_random_string
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import get_object_or_404
 
-from django.contrib.auth import get_user_model, tokens
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
 
 from reviews.models import Review, Comment, Title, Genre, Category
 
@@ -69,19 +72,32 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class UserSignupSerializer(serializers.ModelSerializer):
+class UserSignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'email')
 
     def validate_username(self, value):
         if value == 'me':
-            raise serializers.ValidationError('Username "me" not allowed')
+            raise serializers.ValidationError('Username me not allowed')
         return value
 
     def create(self, validated_data):
-        confirmation_code = tokens.default_token_generator()
-        user = User.objects.create(
-            confirmation_code=confirmation_code, **validated_data
-        )
-        return user
+        return User.objects.create(**validated_data)
+
+
+class TokenCreateSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150)
+    confirmation_code = serializers.CharField(max_length=256)
+
+    def validate(self, data):
+        user = get_object_or_404(User, username=data['username'])
+        if user.confirmation_code != data['confirmation_code']:
+            raise serializers.ValidationError('Wrong confirmation_code')
+        return RefreshToken.for_user(user).access_token
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('bio', 'email', 'first_name', 'last_name', 'role', 'username')
