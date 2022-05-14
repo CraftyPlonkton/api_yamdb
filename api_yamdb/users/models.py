@@ -8,10 +8,12 @@ class User(AbstractUser):
         ('moderator', 'Модератор'),
         ('admin', 'Администратор')
     )
+    password = models.CharField('password', max_length=128, default=False)
     bio = models.TextField('Биография', blank=True)
     email = models.EmailField('email адрес', max_length=254, unique=True)
-    confirmation_code = models.TextField(
+    confirmation_code = models.CharField(
         'Код подтверждения',
+        max_length=256,
         blank=True
     )
     role = models.CharField(
@@ -22,6 +24,7 @@ class User(AbstractUser):
     )
 
     class Meta:
+        ordering = ['-date_joined']
         constraints = [
             models.CheckConstraint(
                 check=~models.Q(username='me'),
