@@ -1,11 +1,10 @@
-from django.utils.crypto import get_random_string
+from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from django.shortcuts import get_object_or_404
-from django.contrib.auth import get_user_model
 
 from reviews.models import Review, Comment, Title, Genre, Category
 
@@ -100,4 +99,15 @@ class TokenCreateSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('bio', 'email', 'first_name', 'last_name', 'role', 'username')
+        fields = (
+            'bio', 'email', 'first_name', 'last_name', 'role', 'username'
+        )
+
+
+class UserMeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'bio', 'email', 'first_name', 'last_name', 'username', 'role'
+        )
+        read_only_fields = ('role',)

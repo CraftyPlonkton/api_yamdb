@@ -1,15 +1,15 @@
-from rest_framework import viewsets, filters, mixins, views, status
-from rest_framework.permissions import IsAdminUser, AllowAny
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.response import Response
-
-from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
 
+from rest_framework import viewsets, filters, mixins, views, status, generics
+from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
+from rest_framework.response import Response
+
 from reviews.models import Review, Title, Genre, Category
-from .permissions import IsAdminOrOwner
+from .permissions import IsAdminOrSuperuserOnly
 from .serializers import (
     CommentSerializer,
     ReviewSerializer,
@@ -18,7 +18,8 @@ from .serializers import (
     CategorySerializer,
     UserSignUpSerializer,
     TokenCreateSerializer,
-    UserSerializer
+    UserSerializer,
+    UserMeSerializer
 )
 
 User = get_user_model()
@@ -90,7 +91,6 @@ class UserSignUpView(views.APIView):
         serializer = UserSignUpSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         confirmation_code = get_random_string(length=30)
-        serializer.save()
         serializer.save(confirmation_code=confirmation_code)
         print(serializer.validated_data)
         send_mail(
@@ -121,7 +121,17 @@ class UserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAdminOrOwner,)
+    permission_classes = (IsAuthenticated & IsAdminOrSuperuserOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ['username']
 
+
+class UserMeView(generics.RetrieveUpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserMeSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self):
+        obj = User.objects.get(username=self.request.user.username)
+        self.check_object_permissions(self.request, obj)
+        return obj
