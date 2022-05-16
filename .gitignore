@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 __init__.py
 apps.py
+pytest.ini
 
 # C extensions
 *.so

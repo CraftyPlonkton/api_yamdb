@@ -1,32 +1,56 @@
+from pickle import TRUE
+from unicodedata import category
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from django.core.exceptions import ObjectDoesNotExist
 
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from reviews.models import Review, Comment, Title, Genre, Category
+from reviews.models import Review, Comment, Title, Genre, Category, GanreTitle
+
+import datetime as dt
 
 User = get_user_model()
-
-
-class TitleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Title
-        fields = "__all__"
 
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = "__all__"
+        fields = ('name', 'slug')
 
+
+class TitleSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(many=True, required=True)
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(),
+        slug_field='slug', many=False
+    )
+    class Meta:
+        model = Title
+        fields = '__all__'
+
+    def validate_year(self, value):
+        if value > dt.datetime.now().year:
+            raise serializers.ValidationError('Нельзя добавлять произведения,'
+                                              'которые еще не вышли')
+        return value
+
+    def create(self, validated_data):
+        genres = validated_data.pop('genre')
+        title = Title.objects.create(**validated_data)
+        for genre in genres:
+            current_genre = Genre.get_object_or_404(**genre)
+            GanreTitle.objects.create(genre=current_genre, title=title)
+        return title
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = "__all__"
+        fields = ('name', 'slug')
+
 
 
 class ReviewSerializer(serializers.ModelSerializer):
