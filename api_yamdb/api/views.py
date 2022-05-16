@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from reviews.models import Review, Title, Genre, Category
-from .permissions import IsAdminOrSuperuserOnly
+from .permissions import IsAdminOrSuperuserOnly, IsAdminOrReadOnly
 from .serializers import (
     CommentSerializer,
     ReviewSerializer,
@@ -58,7 +58,7 @@ class CategoryViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = (filters.SearchFilter,)
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrReadOnly]
     pagination_class = LimitOffsetPagination
     search_fields = ('name',)
 
@@ -69,7 +69,7 @@ class GenereViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrReadOnly]
     pagination_class = LimitOffsetPagination
     search_fields = ('name',)
 
@@ -79,9 +79,9 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
     filter_backends = (filters.SearchFilter,)
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrReadOnly]
     pagination_class = LimitOffsetPagination
-    search_fields = ('name',)
+    search_fields = ('name', 'category__slug', 'genre_slug', 'year')
 
 
 class UserSignUpView(views.APIView):
