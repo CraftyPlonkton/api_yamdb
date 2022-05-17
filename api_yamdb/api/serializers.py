@@ -54,7 +54,7 @@ class TitleSerializer(serializers.ModelSerializer):
         return data
 
 
-class ReadOnlyTitleSerializer(serializers.ModelSerializer):
+class RatingSerializer(serializers.ModelSerializer):
     rating = serializers.IntegerField(
         source='reviews__score__avg', read_only=True
     )

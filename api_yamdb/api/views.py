@@ -25,7 +25,7 @@ from .serializers import (
     TokenCreateSerializer,
     UserSerializer,
     UserMeSerializer,
-    ReadOnlyTitleSerializer
+    RatingSerializer
 )
 
 User = get_user_model()
@@ -96,7 +96,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ("retrieve", "list"):
-            return ReadOnlyTitleSerializer
+            return RatingSerializer
         return TitleSerializer
 
 
