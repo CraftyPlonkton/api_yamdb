@@ -86,10 +86,24 @@ class GenereViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    filter_backends = (filters.SearchFilter,)
     permission_classes = [IsAdminOrReadOnly]
     pagination_class = LimitOffsetPagination
-    search_fields = ('name', 'category__slug', 'genre_slug', 'year')
+
+    def get_queryset(self):
+        queryset = Title.objects.all()
+        slugG = self.request.query_params.get('genre')
+        slugC = self.request.query_params.get('category')
+        year = self.request.query_params.get('year')
+        name = self.request.query_params.get('name')
+        if slugG is not None:
+            queryset = queryset.filter(genre__slug=slugG)
+        if slugC is not None:
+            queryset = queryset.filter(category__slug=slugC)
+        if year is not None:
+            queryset = queryset.filter(year=year)
+        if name is not None:
+            queryset = queryset.filter(name__contains = name)
+        return queryset
 
 
 class UserSignUpView(views.APIView):
