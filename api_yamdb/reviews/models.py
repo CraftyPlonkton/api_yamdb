@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 
 User = get_user_model()
 
@@ -12,7 +14,7 @@ class Review(models.Model):
         related_name='reviews'
     )
     text = models.TextField(
-        verbose_name='Текст',
+        verbose_name='Текст'
     )
     author = models.ForeignKey(
         User,
@@ -22,7 +24,10 @@ class Review(models.Model):
     )
     score = models.IntegerField(
         verbose_name='Рейтинг',
-
+        validators=[
+            MinValueValidator(1, 'Допустимы значения от 1 до 10'),
+            MaxValueValidator(10, 'Допустимы значения от 1 до 10')
+        ]
     )
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации',
@@ -33,6 +38,12 @@ class Review(models.Model):
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
         ordering = ['pub_date']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['title', 'author'],
+                name='unique_review'
+            ),
+        ]
 
 
 class Comment(models.Model):
@@ -85,12 +96,20 @@ class Genre(models.Model):
 class Title(models.Model):
     name = models.TextField()
     year = models.IntegerField()
-    description = models.TextField()
+    description = models.TextField(
+        null=True,
+        blank=True
+    )
     genre = models.ManyToManyField(
-        Genre, through='GanreTitle', related_name='titles')
+        Genre, through='GanreTitle')
     category = models.ForeignKey(
         Category, null=True, on_delete=models.SET_NULL,
         related_name='titles')
+    rating = models.IntegerField(
+        verbose_name='Рейтинг',
+        null=True,
+        default=None
+    )
 
     def __str__(self):
         return self.name
@@ -101,4 +120,4 @@ class GanreTitle(models.Model):
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.genre} {self.title}'
+        return f'{self.genre}, {self.title}'

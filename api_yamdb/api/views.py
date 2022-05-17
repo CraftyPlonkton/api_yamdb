@@ -2,12 +2,13 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
-
+from django.db.models import Avg
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters, mixins, views, status, generics
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-
+from .filters import TitlesFilter
 from reviews.models import Review, Title, Genre, Category
 from .permissions import (
     IsAdminOrSuperuserOnly,
@@ -23,7 +24,8 @@ from .serializers import (
     UserSignUpSerializer,
     TokenCreateSerializer,
     UserSerializer,
-    UserMeSerializer
+    UserMeSerializer,
+    ReadOnlyTitleSerializer
 )
 
 User = get_user_model()
@@ -84,12 +86,18 @@ class GenereViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
 
 # GETlist, GET, POST, PATCH, DELETE
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().annotate(
+        Avg("reviews__score")
+    ).order_by("name")
     serializer_class = TitleSerializer
-    filter_backends = (filters.SearchFilter,)
     permission_classes = [IsAdminOrReadOnly]
-    pagination_class = LimitOffsetPagination
-    search_fields = ('name', 'category__slug', 'genre_slug', 'year')
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TitlesFilter
+
+    def get_serializer_class(self):
+        if self.action in ("retrieve", "list"):
+            return ReadOnlyTitleSerializer
+        return TitleSerializer
 
 
 class UserSignUpView(views.APIView):
