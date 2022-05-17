@@ -20,7 +20,7 @@ class Review(models.Model):
         on_delete=models.CASCADE,
         related_name='reviews'
     )
-    scope = models.IntegerField(
+    score = models.IntegerField(
         verbose_name='Рейтинг',
 
     )
@@ -61,7 +61,7 @@ class Comment(models.Model):
         verbose_name_plural = 'Комментарии'
         ordering = ['pub_date']
 
-        
+
 class Category(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(
@@ -87,9 +87,10 @@ class Title(models.Model):
     year = models.IntegerField()
     description = models.TextField()
     genre = models.ManyToManyField(
-        Genre, through = 'GanreTitle', related_name='titles')
+        Genre, through='GanreTitle', related_name='titles')
     category = models.ForeignKey(
-        Category, null=True, on_delete=models.SET_NULL, related_name='titles')
+        Category, null=True, on_delete=models.SET_NULL,
+        related_name='titles')
 
     def __str__(self):
         return self.name

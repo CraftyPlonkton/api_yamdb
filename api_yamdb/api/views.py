@@ -5,11 +5,15 @@ from django.utils.crypto import get_random_string
 
 from rest_framework import viewsets, filters, mixins, views, status, generics
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from reviews.models import Review, Title, Genre, Category
-from .permissions import IsAdminOrSuperuserOnly, IsAdminOrReadOnly
+from .permissions import (
+    IsAdminOrSuperuserOnly,
+    IsAdminOrReadOnly,
+    IsAuthenticatedOrReadOnly
+)
 from .serializers import (
     CommentSerializer,
     ReviewSerializer,
@@ -27,10 +31,11 @@ User = get_user_model()
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        return title.review.all()
+        return title.reviews.all()
 
     def perform_create(self, serializer):
         title_id = self.kwargs.get('title_id')
@@ -40,6 +45,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get_queryset(self):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
@@ -51,10 +57,11 @@ class CommentViewSet(viewsets.ModelViewSet):
         review = get_object_or_404(Review, id=review_id, title=title_id)
         serializer.save(author=self.request.user, review=review)
 
-        
+
 # GETlist, POST, DELETE
 class CategoryViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
                       mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    lookup_field = 'slug'
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = (filters.SearchFilter,)
@@ -66,6 +73,7 @@ class CategoryViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
 # GETlist, POST, DELETE
 class GenereViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
                     mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    lookup_field = 'slug'
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
@@ -92,7 +100,6 @@ class UserSignUpView(views.APIView):
         serializer.is_valid(raise_exception=True)
         confirmation_code = get_random_string(length=30)
         serializer.save(confirmation_code=confirmation_code)
-        print(serializer.validated_data)
         send_mail(
             'Subject',
             f'Your confirmation code {confirmation_code}',
