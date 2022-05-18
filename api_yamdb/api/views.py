@@ -86,7 +86,6 @@ class GenereViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
 
 # GETlist, GET, POST, PATCH, DELETE
 class TitleViewSet(viewsets.ModelViewSet):
-    
     serializer_class = TitleSerializer
     permission_classes = [IsAdminOrReadOnly]
 
@@ -99,8 +98,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Title.objects.all().annotate(
-        Avg("reviews__score")
-    ).order_by("name")
+            Avg("reviews__score")).order_by("name")
         slugG = self.request.query_params.get('genre')
         slugC = self.request.query_params.get('category')
         year = self.request.query_params.get('year')
@@ -112,9 +110,8 @@ class TitleViewSet(viewsets.ModelViewSet):
         if year is not None:
             queryset = queryset.filter(year=year)
         if name is not None:
-            queryset = queryset.filter(name__contains = name)
+            queryset = queryset.filter(name__contains=name)
         return queryset
-
 
 
 class UserSignUpView(views.APIView):
