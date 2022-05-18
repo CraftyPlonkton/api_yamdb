@@ -54,11 +54,29 @@ class TitleSerializer(serializers.ModelSerializer):
         return data
 
 
+class RatingSerializer(serializers.ModelSerializer):
+    rating = serializers.IntegerField(
+        source='reviews__score__avg', read_only=True
+    )
+    genre = GenreSerializer(many=True)
+    category = CategorySerializer()
+
+    class Meta:
+        model = Title
+        fields = (
+            'id', 'name', 'year', 'rating', 'description', 'genre', 'category'
+        )
+
+
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         default=serializers.CurrentUserDefault(),
         slug_field='username',
         read_only=True
+    )
+    title = serializers.SlugRelatedField(
+        slug_field='name',
+        read_only=True,
     )
 
     def validate(self, data):
@@ -74,7 +92,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ('id', 'text', 'author', 'score', 'pub_date')
+        fields = '__all__'
 
 
 class CommentSerializer(serializers.ModelSerializer):
