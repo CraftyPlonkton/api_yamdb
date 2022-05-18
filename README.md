@@ -49,6 +49,31 @@ python3 manage.py migrate
 python3 manage.py runserver
 ```
 
+### Авторизация пользователей:
+Для получения доступа необходимо создать пользователя отправив POST запрос на эндпоинт /api/v1/auth/signup/ username и email
+Запрос:
+```
+{
+"email": "string",
+"username": "string"
+}
+```
+После этого на email придет код подтверждения, который вместе с username необходимо отправить POST запросом на эндпоинт /api/v1/auth/token/
+Запрос:
+```
+{
+"username": "string",
+"confirmation_code": "string"
+}
+```
+Ответ:
+```
+{
+"access": "string"
+}
+```
+Полученный токен используется для авторизации
+
 ### Примеры запросов к API:
 
 Получение списка всех категорий:
