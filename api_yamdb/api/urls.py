@@ -6,7 +6,7 @@ from .views import (
     ReviewViewSet,
     CommentViewSet,
     CategoryViewSet,
-    GenereViewSet,
+    GenreViewSet,
     TitleViewSet,
     UserSignUpView,
     TokenCreateView,
@@ -21,7 +21,7 @@ v1_router.register(r'titles/(?P<title_id>\d+)/reviews',
 v1_router.register(r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)'
                    r'/comments', CommentViewSet, basename='comments')
 v1_router.register(r"categories", CategoryViewSet, basename="categories")
-v1_router.register(r"genres", GenereViewSet, basename="genres")
+v1_router.register(r"genres", GenreViewSet, basename="genres")
 v1_router.register(r"titles", TitleViewSet, basename="titles")
 v1_router.register(r'users', UserViewSet, basename='users')
 
