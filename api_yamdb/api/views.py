@@ -4,6 +4,8 @@ from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
 from django.db.models import Avg
 
+from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework import viewsets, filters, mixins, views, status, generics
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -27,6 +29,7 @@ from .serializers import (
     UserMeSerializer,
     RatingSerializer
 )
+from .filters import TitleFilter
 
 User = get_user_model()
 
@@ -73,7 +76,7 @@ class CategoryViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
 
 
 # GETlist, POST, DELETE
-class GenereViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
+class GenreViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
                     mixins.DestroyModelMixin, viewsets.GenericViewSet):
     lookup_field = 'slug'
     queryset = Genre.objects.all()
@@ -95,22 +98,12 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleSerializer
 
     pagination_class = LimitOffsetPagination
+    filter_backends = [DjangoFilterBackend,]
+    filterset_class = TitleFilter
 
     def get_queryset(self):
         queryset = Title.objects.all().annotate(
             Avg("reviews__score")).order_by("name")
-        slugG = self.request.query_params.get('genre')
-        slugC = self.request.query_params.get('category')
-        year = self.request.query_params.get('year')
-        name = self.request.query_params.get('name')
-        if slugG is not None:
-            queryset = queryset.filter(genre__slug=slugG)
-        if slugC is not None:
-            queryset = queryset.filter(category__slug=slugC)
-        if year is not None:
-            queryset = queryset.filter(year=year)
-        if name is not None:
-            queryset = queryset.filter(name__contains=name)
         return queryset
 
 
