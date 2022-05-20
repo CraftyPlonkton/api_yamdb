@@ -118,10 +118,15 @@ class UserSignUpSerializer(serializers.ModelSerializer):
     def validate_username(self, value):
         if value == 'me':
             raise serializers.ValidationError('Username me not allowed')
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError('Username already taken')
         return value
 
-    def create(self, validated_data):
-        return User.objects.create(**validated_data)
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                'User with this email alredady exists')
+        return value
 
 
 class TokenCreateSerializer(serializers.Serializer):

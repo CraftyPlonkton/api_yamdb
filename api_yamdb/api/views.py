@@ -4,18 +4,21 @@ from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
 from django.db.models import Avg
 
+
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import viewsets, filters, mixins, views, status, generics
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.decorators import action
 
 from reviews.models import Review, Title, Genre, Category
 from .permissions import (
     IsAdminOrSuperuserOnly,
     IsAdminOrReadOnly,
-    IsAuthenticatedOrReadOnly
+    IsAuthenticatedOrReadOnly,
+    IsOwnerOrAdmin
 )
 from .serializers import (
     CommentSerializer,
@@ -98,7 +101,7 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleSerializer
 
     pagination_class = LimitOffsetPagination
-    filter_backends = [DjangoFilterBackend,]
+    filter_backends = [DjangoFilterBackend, ]
     filterset_class = TitleFilter
 
     def get_queryset(self):
@@ -143,9 +146,30 @@ class UserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated & IsAdminOrSuperuserOnly,)
+    # permission_classes = (IsAuthenticated & IsAdminOrSuperuserOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ['username']
+
+    def get_permissions(self):
+        if self.kwargs.get('username') == 'me':
+            print('me')
+            permission_classes = (AllowAny,) # (IsAuthenticated & IsOwnerOrAdmin,)
+        else:
+            permission_classes = (AllowAny,) # (IsAuthenticated & IsAdminOrSuperuserOnly,)
+        return [permission() for permission in permission_classes]
+
+    '''def get_object(self):
+        if self.kwargs['username'] == 'me':
+            print('me obj')
+            obj = User.objects.get(username=self.request.user.username)
+            self.check_object_permissions(self.request, obj)
+            return obj
+        return super().get_object()'''
+
+    @action(detail=True, methods=['get', 'patch'], url_path=r'/users/me/')
+    def me(self, request, username=None):
+       return Response(data='hi')
+
 
 
 class UserMeView(generics.RetrieveUpdateAPIView):
