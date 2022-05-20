@@ -3,12 +3,12 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
 from django.db.models import Avg
-from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework import viewsets, filters, mixins, views, status, generics
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .filters import TitlesFilter
+
 from reviews.models import Review, Title, Genre, Category
 from .permissions import (
     IsAdminOrSuperuserOnly,
@@ -88,18 +88,35 @@ class GenereViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
 
 # GETlist, GET, POST, PATCH, DELETE
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all().annotate(
-        Avg("reviews__score")
-    ).order_by("name")
+    
     serializer_class = TitleSerializer
     permission_classes = [IsAdminOrReadOnly]
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = TitlesFilter
 
     def get_serializer_class(self):
         if self.action in ("retrieve", "list"):
             return RatingSerializer
         return TitleSerializer
+
+    pagination_class = LimitOffsetPagination
+
+    def get_queryset(self):
+        queryset = Title.objects.all().annotate(
+        Avg("reviews__score")
+    ).order_by("name")
+        slugG = self.request.query_params.get('genre')
+        slugC = self.request.query_params.get('category')
+        year = self.request.query_params.get('year')
+        name = self.request.query_params.get('name')
+        if slugG is not None:
+            queryset = queryset.filter(genre__slug=slugG)
+        if slugC is not None:
+            queryset = queryset.filter(category__slug=slugC)
+        if year is not None:
+            queryset = queryset.filter(year=year)
+        if name is not None:
+            queryset = queryset.filter(name__contains = name)
+        return queryset
+
 
 
 class UserSignUpView(views.APIView):
