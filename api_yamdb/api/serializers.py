@@ -119,10 +119,15 @@ class UserSignUpSerializer(serializers.ModelSerializer):
     def validate_username(self, value):
         if value == 'me':
             raise serializers.ValidationError('Username me not allowed')
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError('Username already taken')
         return value
 
-    def create(self, validated_data):
-        return User.objects.create(**validated_data)
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                'User with this email alredady exists')
+        return value
 
 
 class TokenCreateSerializer(serializers.Serializer):
@@ -142,12 +147,3 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             'bio', 'email', 'first_name', 'last_name', 'role', 'username'
         )
-
-
-class UserMeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = (
-            'bio', 'email', 'first_name', 'last_name', 'username', 'role'
-        )
-        read_only_fields = ('role',)

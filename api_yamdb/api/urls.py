@@ -11,7 +11,6 @@ from .views import (
     UserSignUpView,
     TokenCreateView,
     UserViewSet,
-    UserMeView
 )
 
 
@@ -28,6 +27,5 @@ v1_router.register(r'users', UserViewSet, basename='users')
 urlpatterns = [
     path('v1/auth/signup/', UserSignUpView.as_view()),
     path('v1/auth/token/', TokenCreateView.as_view()),
-    path(r'v1/users/me/', UserMeView.as_view()),
     path('v1/', include(v1_router.urls)),
 ]

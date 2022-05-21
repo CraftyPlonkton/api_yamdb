@@ -6,7 +6,8 @@ from django.db.models import Avg
 
 from django_filters.rest_framework import DjangoFilterBackend
 
-from rest_framework import viewsets, filters, mixins, views, status, generics
+from rest_framework import viewsets, filters, mixins, views, status
+from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -26,7 +27,6 @@ from .serializers import (
     UserSignUpSerializer,
     TokenCreateSerializer,
     UserSerializer,
-    UserMeSerializer,
     RatingSerializer
 )
 from .filters import TitleFilter
@@ -79,7 +79,7 @@ class CategoryViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
 
 # GETlist, POST, DELETE
 class GenreViewSet(mixins.CreateModelMixin, mixins.ListModelMixin,
-                    mixins.DestroyModelMixin, viewsets.GenericViewSet):
+                   mixins.DestroyModelMixin, viewsets.GenericViewSet):
     lookup_field = 'slug'
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -100,7 +100,7 @@ class TitleViewSet(viewsets.ModelViewSet):
         return TitleSerializer
 
     pagination_class = LimitOffsetPagination
-    filter_backends = [DjangoFilterBackend,]
+    filter_backends = [DjangoFilterBackend, ]
     filterset_class = TitleFilter
 
     def get_queryset(self):
@@ -149,13 +149,19 @@ class UserViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ['username']
 
-
-class UserMeView(generics.RetrieveUpdateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserMeSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def get_object(self):
-        obj = User.objects.get(username=self.request.user.username)
-        self.check_object_permissions(self.request, obj)
-        return obj
+    @action(
+        detail=False, methods=['get', 'patch'],
+        permission_classes=(IsAuthenticated,)
+    )
+    def me(self, request):
+        user = self.request.user
+        if request.method == 'GET':
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
+        if request.method == 'PATCH':
+            serializer = UserSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid(raise_exception=True):
+                if serializer.validated_data.get('role'):
+                    serializer.validated_data.pop('role')
+                serializer.save()
+                return Response(serializer.data)

@@ -17,7 +17,7 @@ class User(AbstractUser):
         blank=True
     )
     role = models.CharField(
-        'Првава доступа',
+        'Права доступа',
         max_length=30,
         choices=ROLE_CHOICES,
         default='user'
@@ -30,6 +30,14 @@ class User(AbstractUser):
                 check=~models.Q(username='me'),
                 name='username_not_me')
         ]
+
+    def is_admin(self):
+        if self.role in ['admin'] or self.is_superuser:
+            return True
+
+    def is_moderator(self):
+        if self.role in ['moderator']:
+            return True
 
     def __str__(self):
         return self.username
